@@ -5,6 +5,8 @@ use std::{env, process, str::SplitWhitespace};
 fn main() {
     // Get PATH environment variable or use default
     let path = env::var("PATH").unwrap_or("/usr/bin:/usr/local/bin".to_string());
+    // Split PATH into a list of paths
+    let path_list = path.split(':').collect::<Vec<&str>>();
 
     let stdin = io::stdin();
     let mut input = String::new();
@@ -22,7 +24,11 @@ fn main() {
                 let text = splitted_input.collect::<Vec<&str>>().join(" ");
                 println!("{}", text);
             }
-            Some("type") => type_handler(splitted_input, path.as_str()),
+            Some("type") => type_handler(splitted_input, &path_list),
+            Some(command) => {
+                let args = splitted_input.collect::<Vec<&str>>();
+                custom_command_handler(command, &args, &path_list)
+            }
             _ => {
                 println!("{}: command not found", input.trim());
             }
@@ -49,9 +55,7 @@ fn exit_handler(mut splitted_input: SplitWhitespace) {
     }
 }
 
-fn type_handler(mut splitted_input: SplitWhitespace, path: &str) {
-    let path_list = path.split(':').collect::<Vec<&str>>();
-
+fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
     let command = splitted_input.next().unwrap();
 
     match command {
@@ -78,4 +82,31 @@ fn type_handler(mut splitted_input: SplitWhitespace, path: &str) {
             println!("{} not found", command);
         }
     }
+}
+
+fn custom_command_handler(command: &str, args: &[&str], path_list: &[&str]) {
+    // Check if the command exists in the path
+    let command_path = path_list.iter().find(|path| {
+        let full_path = format!("{}/{}", path, command);
+        std::fs::metadata(&full_path).is_ok()
+    });
+
+    // Execute the command if it exists
+    match command_path {
+        Some(path) => {
+            execute_command(&format!("{}/{}", path, command), args);
+        }
+        None => {
+            println!("{}: command not found", command);
+        }
+    }
+}
+
+fn execute_command(command: &str, args: &[&str]) {
+    let mut child = process::Command::new(command)
+        .args(args)
+        .spawn()
+        .expect("Failed to execute command");
+
+    child.wait().expect("Command failed to execute");
 }
