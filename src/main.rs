@@ -1,8 +1,11 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::{process, str::SplitWhitespace};
+use std::{env, process, str::SplitWhitespace};
 
 fn main() {
+    // Get PATH environment variable or use default
+    let path = env::var("PATH").unwrap_or("/usr/bin:/usr/local/bin".to_string());
+
     let stdin = io::stdin();
     let mut input = String::new();
 
@@ -19,7 +22,7 @@ fn main() {
                 let text = splitted_input.collect::<Vec<&str>>().join(" ");
                 println!("{}", text);
             }
-            Some("type") => type_handler(splitted_input),
+            Some("type") => type_handler(splitted_input, path.as_str()),
             _ => {
                 println!("{}: command not found", input.trim());
             }
@@ -46,7 +49,9 @@ fn exit_handler(mut splitted_input: SplitWhitespace) {
     }
 }
 
-fn type_handler(mut splitted_input: SplitWhitespace) {
+fn type_handler(mut splitted_input: SplitWhitespace, path: &str) {
+    let path_list = path.split(':').collect::<Vec<&str>>();
+
     let command = splitted_input.next().unwrap();
 
     match command {
@@ -60,6 +65,16 @@ fn type_handler(mut splitted_input: SplitWhitespace) {
             println!("type is a shell builtin");
         }
         _ => {
+            for path in path_list {
+                // Check if the command exists in the path
+                let full_path = format!("{}/{}", path, command);
+
+                if std::fs::metadata(&full_path).is_ok() {
+                    println!("{} is {}", command, full_path);
+                    return;
+                }
+            }
+
             println!("{} not found", command);
         }
     }
