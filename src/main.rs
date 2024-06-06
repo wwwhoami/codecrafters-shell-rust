@@ -27,6 +27,10 @@ fn main() {
                     }
                 }
             }
+            Some("echo") => {
+                let text = splitted_input.collect::<Vec<&str>>().join(" ");
+                println!("{}", text);
+            }
             _ => {
                 println!("{}: command not found", input.trim());
             }
