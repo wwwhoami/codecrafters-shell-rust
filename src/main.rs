@@ -21,10 +21,7 @@ fn main() {
         match splitted_input.next() {
             Some(input_command) => match input_command {
                 "exit" => exit_handler(splitted_input),
-                "echo" => {
-                    let text = splitted_input.collect::<Vec<&str>>().join(" ");
-                    println!("{}", text);
-                }
+                "echo" => echo_handler(splitted_input),
                 "type" => type_handler(splitted_input, &path_list),
                 "pwd" => pwd_handler(),
                 "cd" => cd_handler(splitted_input),
@@ -59,6 +56,11 @@ fn exit_handler(mut splitted_input: SplitWhitespace) {
     }
 }
 
+fn echo_handler(splitted_input: SplitWhitespace) {
+    let text = splitted_input.collect::<Vec<&str>>().join(" ");
+    println!("{}", text);
+}
+
 fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
     let command = splitted_input.next().unwrap();
 
@@ -88,7 +90,13 @@ fn pwd_handler() {
 }
 
 fn cd_handler(mut splitted_input: SplitWhitespace) {
-    let new_dir = splitted_input.next().unwrap();
+    let mut new_dir = splitted_input.next().unwrap().to_string();
+
+    // Replace ~ with home directory
+    if new_dir.starts_with('~') {
+        let home_dir = env::var("HOME").expect("Failed to get home directory");
+        new_dir = new_dir.replace("~", &home_dir);
+    }
 
     let path = env::current_dir().expect("Failed to get current directory");
     let new_path = path.join(new_dir);
@@ -96,7 +104,7 @@ fn cd_handler(mut splitted_input: SplitWhitespace) {
     if new_path.is_dir() {
         env::set_current_dir(new_path).expect("Failed to change directory");
     } else {
-        eprintln!("cd: {}: No such file or directory", new_dir);
+        eprintln!("cd: {}: No such file or directory", new_path.display());
     }
 }
 
