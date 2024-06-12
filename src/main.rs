@@ -16,7 +16,7 @@ fn main() {
     io::stdout().flush().unwrap();
 
     while stdin.read_line(&mut input).is_ok() {
-        let mut splitted_input = input.trim().split_whitespace();
+        let mut splitted_input = input.split_whitespace();
 
         match splitted_input.next() {
             Some(input_command) => match input_command {
@@ -95,7 +95,7 @@ fn cd_handler(mut splitted_input: SplitWhitespace) {
     // Replace ~ with home directory
     if new_dir.starts_with('~') {
         let home_dir = env::var("HOME").expect("Failed to get home directory");
-        new_dir = new_dir.replace("~", &home_dir);
+        new_dir = new_dir.replace('~', &home_dir);
     }
 
     let path = env::current_dir().expect("Failed to get current directory");
@@ -112,7 +112,7 @@ fn custom_command_handler(command: &str, args: &[&str], path_list: &[&str]) {
     // Check if the command exists in the path
     let command_path = path_list.iter().find(|path| {
         let full_path = format!("{}/{}", path, command);
-        std::fs::metadata(&full_path).is_ok()
+        std::fs::metadata(full_path).is_ok()
     });
 
     // Execute the command if it exists
