@@ -19,16 +19,19 @@ fn main() {
         let mut splitted_input = input.trim().split_whitespace();
 
         match splitted_input.next() {
-            Some("exit") => exit_handler(splitted_input),
-            Some("echo") => {
-                let text = splitted_input.collect::<Vec<&str>>().join(" ");
-                println!("{}", text);
-            }
-            Some("type") => type_handler(splitted_input, &path_list),
-            Some(command) => {
-                let args = splitted_input.collect::<Vec<&str>>();
-                custom_command_handler(command, &args, &path_list)
-            }
+            Some(input_command) => match input_command {
+                "exit" => exit_handler(splitted_input),
+                "echo" => {
+                    let text = splitted_input.collect::<Vec<&str>>().join(" ");
+                    println!("{}", text);
+                }
+                "type" => type_handler(splitted_input, &path_list),
+                "pwd" => pwd_handler(),
+                input_command => {
+                    let args = splitted_input.collect::<Vec<&str>>();
+                    custom_command_handler(input_command, &args, &path_list)
+                }
+            },
             _ => {
                 println!("{}: command not found", input.trim());
             }
@@ -59,14 +62,8 @@ fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
     let command = splitted_input.next().unwrap();
 
     match command {
-        "exit" => {
-            println!("exit is a shell builtin");
-        }
-        "echo" => {
-            println!("echo is a shell builtin");
-        }
-        "type" => {
-            println!("type is a shell builtin");
+        "exit" | "echo" | "type" | "pwd" => {
+            println!("{} is a shell builtin", command);
         }
         _ => {
             for path in path_list {
@@ -79,9 +76,14 @@ fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
                 }
             }
 
-            println!("{} not found", command);
+            println!("{}: not found", command);
         }
     }
+}
+
+fn pwd_handler() {
+    let current_dir = env::current_dir().expect("Failed to get current directory");
+    println!("{}", current_dir.display());
 }
 
 fn custom_command_handler(command: &str, args: &[&str], path_list: &[&str]) {
