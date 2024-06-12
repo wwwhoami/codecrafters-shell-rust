@@ -27,13 +27,14 @@ fn main() {
                 }
                 "type" => type_handler(splitted_input, &path_list),
                 "pwd" => pwd_handler(),
+                "cd" => cd_handler(splitted_input),
                 input_command => {
                     let args = splitted_input.collect::<Vec<&str>>();
                     custom_command_handler(input_command, &args, &path_list)
                 }
             },
             _ => {
-                println!("{}: command not found", input.trim());
+                eprintln!("{}: command not found", input.trim());
             }
         }
 
@@ -62,7 +63,7 @@ fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
     let command = splitted_input.next().unwrap();
 
     match command {
-        "exit" | "echo" | "type" | "pwd" => {
+        "exit" | "echo" | "type" | "pwd" | "cd" => {
             println!("{} is a shell builtin", command);
         }
         _ => {
@@ -76,7 +77,7 @@ fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
                 }
             }
 
-            println!("{}: not found", command);
+            eprintln!("{}: not found", command);
         }
     }
 }
@@ -84,6 +85,19 @@ fn type_handler(mut splitted_input: SplitWhitespace, path_list: &[&str]) {
 fn pwd_handler() {
     let current_dir = env::current_dir().expect("Failed to get current directory");
     println!("{}", current_dir.display());
+}
+
+fn cd_handler(mut splitted_input: SplitWhitespace) {
+    let new_dir = splitted_input.next().unwrap();
+
+    let path = env::current_dir().expect("Failed to get current directory");
+    let new_path = path.join(new_dir);
+
+    if new_path.is_dir() {
+        env::set_current_dir(new_path).expect("Failed to change directory");
+    } else {
+        eprintln!("cd: {}: No such file or directory", new_dir);
+    }
 }
 
 fn custom_command_handler(command: &str, args: &[&str], path_list: &[&str]) {
@@ -99,7 +113,7 @@ fn custom_command_handler(command: &str, args: &[&str], path_list: &[&str]) {
             execute_command(&format!("{}/{}", path, command), args);
         }
         None => {
-            println!("{}: command not found", command);
+            eprintln!("{}: command not found", command);
         }
     }
 }
