@@ -1,4 +1,3 @@
-#[allow(unused_imports)]
 use std::io::{self, Write};
 use std::{env, process, str::SplitWhitespace};
 
